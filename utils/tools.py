@@ -1,4 +1,3 @@
-
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -8,8 +7,13 @@ import pandas as pd
 import random
 import tqdm.notebook as tq
 
-# classes = ['cat', 'cow', 'dog', 'bird', 'car']
-classes = ['cat']
+# Animals
+classes_animals = ['cat', 'cow', 'dog', 'bird', 'horse', 'sheep', 'person'] 
+# Objects
+classes_objects = ['bottle', 'chair', 'diningtable', 'pottedplant', 'sofa', 'tvmonitor']
+# Vehicles
+classes_vehicles = ['aeroplane', 'bicycle', 'boat', 'bus', 'car', 'motorbike', 'train']
+classes = classes_animals
 
 def sort_class_extract(datasets):
     """
@@ -98,8 +102,8 @@ def extract(index, loader):
     return img, ground_truth_boxes
 
 
-def voc_ap(rec, prec, voc2007=True):
-    if voc2007:
+def voc_ap(rec, prec, voc2012=True):
+    if voc2012:
         ap = 0.0
         for t in np.arange(0.0, 1.1, 0.1):
             if np.sum(rec >= t) == 0:

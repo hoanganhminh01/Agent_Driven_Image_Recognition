@@ -8,8 +8,16 @@ class FeatureExtractor(nn.Module):
         super(FeatureExtractor, self).__init__()
         if network[:5] == 'vgg16':
             model = torchvision.models.vgg16(pretrained=True)
-        elif network[:9] == 'resnet50':
+        elif network[:5] == 'vgg19':
+            model = torchvision.models.vgg19(pretrained=True)
+        elif network[:8] == 'resnet50':
             model = torchvision.models.resnet50(pretrained=True)
+        elif network[:9] == 'resnet152':
+            model = torchvision.models.resnet152(pretrained=True)
+        elif network[:11] == 'inceptionv3':
+            model = torchvision.models.inception_v3(pretrained=True)
+        elif network[:11] == 'densenet121':
+            model = torchvision.models.densenet121(pretrained=True)
         else:
             model = torchvision.models.alexnet(pretrained=True)
         model.eval() # to not do dropout
@@ -18,21 +26,23 @@ class FeatureExtractor(nn.Module):
     def forward(self, x):
         x = self.features(x)
         return x
-    
+
+
 class DQN(nn.Module):
     def __init__(self, h, w, outputs, history_length):
         super(DQN, self).__init__()
         self.classifier = nn.Sequential(
-            nn.Linear(in_features= outputs * history_length + 25088, out_features=1024),
+            nn.Linear(in_features=outputs * history_length + 25088, out_features=1024),
             nn.ReLU(),
             nn.Dropout(0.2),
-            nn.Linear( in_features= 1024, out_features=1024),
+            nn.Linear(in_features=1024, out_features=1024),
             nn.ReLU(),
             nn.Dropout(0.2),
-            nn.Linear( in_features= 1024, out_features=outputs)
+            nn.Linear(in_features=1024, out_features=outputs)
         )
     def forward(self, x):
       return self.classifier(x)
+
 
 class PPO(nn.Module):
     def __init__(self, num_inputs, num_actions):

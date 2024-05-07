@@ -7,3 +7,4 @@ For training, use Training.ipynb.   It will save the model checkpoints in ./mode
 
 For testing, use Testing.ipynb.    
 
+Compressed folder of Pascal VOC 2012: https://drive.google.com/file/d/1XU7qwUVnV2S_iiWfb4DEmoxjbnQJxpHE/view

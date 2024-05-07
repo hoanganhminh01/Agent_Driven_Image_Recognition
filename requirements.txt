@@ -1,6 +1,7 @@
 imageio==2.34.1
 matplotlib==3.8.4
-numpy==1.26.4
+numpy==1.24.3
+opencv_python==4.9.0.80
 pandas==2.2.2
 Pillow==10.3.0
 torch==2.3.0
