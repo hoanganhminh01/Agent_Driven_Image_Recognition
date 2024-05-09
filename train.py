@@ -5,9 +5,14 @@ from IPython.display import clear_output
 import tqdm.notebook as tq
 import pickle
 import fire
+# vgg19_3step
 
+def main(model_name, BATCH_SIZE=128):
 
-def main(BATCH_SIZE=64):
+    # hack 
+    if '_3step' not in model_name:
+        model_name = model_name + '_3step'
+
     train_loader2012, val_loader2012 = read_voc_dataset(
         path="./data/PascalVOC2012", year="2012", download=False
     )
@@ -24,7 +29,7 @@ def main(BATCH_SIZE=64):
             alpha=0.2,
             num_episodes=15,
             load=False,
-            model_name="vgg19_3step",
+            model_name=model_name,
             BATCH_SIZE=BATCH_SIZE,
         )
         agent.train(datasets_per_class_train[curr_class])
@@ -35,7 +40,7 @@ def main(BATCH_SIZE=64):
     results = {}
     for i in classes:
         results[i] = []
-    model_name = "vgg19_3step"
+    # model_name = "vgg19_3step"
     for i in tq.tqdm(range(len(classes))):
         curr_class = classes[i]
         print("Class: " + str(curr_class) + "...")

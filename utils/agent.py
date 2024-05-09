@@ -65,7 +65,7 @@ class Agent:
 
         if not load:
             self.policy_net = DQN(
-                screen_height, screen_width, self.n_actions, history_length=9
+                screen_height, screen_width, self.n_actions, history_length=9, model_name=self.model_name
             )
         else:
             self.policy_net = (
@@ -73,7 +73,7 @@ class Agent:
             )  # policy net - DQN, inputs state vector, outputs q value for each action
 
         self.target_net = DQN(
-            screen_height, screen_width, self.n_actions, history_length=9
+            screen_height, screen_width, self.n_actions, history_length=9, model_name=self.model_name
         )
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.target_net.eval()  # target net - same DQN as policy net, works as frozen net to compute loss
@@ -342,6 +342,8 @@ class Agent:
         image = Variable(image).type(dtype)
         if use_cuda:
             image = image.cuda()
+        # with torch.no_grad():
+  
         feature = self.feature_extractor(image)
         return feature.data
 
@@ -371,6 +373,8 @@ class Agent:
         ---------
         state - a state variable, which is concatenation of image feature vector and action history vector
         """
+        # print(image.shape)
+        # exit()
         image_feature = self.get_features(image, dtype)
         image_feature = image_feature.view(1, -1)
         history_flatten = self.actions_history.view(1, -1).type(dtype)
@@ -408,7 +412,8 @@ class Agent:
         reward_batch = Variable(torch.FloatTensor(batch.reward).view(-1, 1)).type(
             Tensor
         )
-
+        # print(state_batch.shape)
+        # exit()
         # use policy_net to generate q_values
         state_action_values = self.policy_net(state_batch).gather(1, action_batch)
 

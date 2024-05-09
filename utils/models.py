@@ -26,13 +26,15 @@ class FeatureExtractor(nn.Module):
             self.classifier = nn.Sequential(*list(model.classifier.children())[:-2])
         elif 'resnet' in network:
             self.features = nn.Sequential(*list(model.children())[:-2])
+            print(self.features)
+
             self.classifier = nn.Sequential(nn.Linear(model.fc.in_features, model.fc.out_features), nn.Softmax(dim=1))
         elif 'inceptionv3' in network:
             self.features = nn.Sequential(*list(model.children())[:-1])
             self.classifier = nn.Linear(model.fc.in_features, model.fc.out_features)
         elif 'densenet' in network:
             self.features = model.features
-            self.classifier = nn.Linear(model.classifier.in_features, model.classifier.out_features)
+            # self.classifier = nn.Linear(model.classifier.in_features, model.classifier.out_features)
         else:  # for AlexNet
             self.features = model.features
             self.classifier = nn.Sequential(*list(model.classifier.children())[:-1])
@@ -42,10 +44,19 @@ class FeatureExtractor(nn.Module):
 
 
 class DQN(nn.Module):
-    def __init__(self, h, w, outputs, history_length):
+    def __init__(self, h, w, outputs, history_length, model_name):
         super(DQN, self).__init__()
+        if 'vgg' in model_name: 
+            feat_dim = outputs * history_length +  25088
+        elif 'resnet' in model_name:
+            feat_dim = outputs * history_length + 100352
+        elif 'densenet' in model_name:
+            feat_dim = outputs * history_length + 9441 - 225
+
+        # print(outputs * history_length , model_name)
+        # print(feat_dim)
         self.classifier = nn.Sequential(
-            nn.Linear(in_features=outputs * history_length + 25088, out_features=1024),
+            nn.Linear(in_features=feat_dim, out_features=1024),
             nn.ReLU(),
             nn.Dropout(0.2),
             nn.Linear(in_features=1024, out_features=1024),

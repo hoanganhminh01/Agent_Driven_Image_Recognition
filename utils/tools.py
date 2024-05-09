@@ -8,7 +8,9 @@ import random
 import tqdm.notebook as tq
 
 # Animals
-classes_animals = ['cat', 'cow', 'dog', 'bird', 'horse', 'sheep', 'person'] 
+# classes_animals = ['cat', 'cow', 'dog', 'bird', 'horse', 'sheep', 'person'] 
+classes_animals = ['cat', 'cow', 'dog', 'bird', 'horse', 'sheep'] 
+
 # Objects
 classes_objects = ['bottle', 'chair', 'diningtable', 'pottedplant', 'sofa', 'tvmonitor']
 # Vehicles
