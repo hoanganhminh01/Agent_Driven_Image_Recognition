@@ -27,6 +27,28 @@ from config import *
 import glob
 from PIL import Image
 
+import os
+import sys
+# include the path to the root directory of the project
+sys.path.append(os.path.join(os.getcwd(), '../../'))
+
+import detectron2
+from detectron2.utils.logger import setup_logger
+
+# import some common libraries
+import numpy as np
+import os, json, cv2, random
+
+# import some common detectron2 utilities
+from detectron2 import model_zoo
+from detectron2.engine import DefaultPredictor
+from detectron2.config import get_cfg
+from detectron2.utils.visualizer import Visualizer
+from detectron2.data import MetadataCatalog, DatasetCatalog
+
+
+
+
 
 class Agent:
     def __init__(
@@ -60,36 +82,50 @@ class Agent:
         self.curr_class = curr_class  # which class this agent is working on
         self.save_path = SAVE_MODEL_PATH  # path to save network
         self.model_name = model_name  # which model to use for feature extractor 'vgg16' or 'resnet50' or ...
-        self.feature_extractor = FeatureExtractor(network=self.model_name)
-        self.feature_extractor.eval()  # a pre-trained CNN model as feature extractor
+        # self.feature_extractor = FeatureExtractor(network=self.model_name)
+        # self.feature_extractor.eval()  # a pre-trained CNN model as feature extractor
 
-        if not load:
-            self.policy_net = DQN(
-                screen_height, screen_width, self.n_actions, history_length=9, model_name=self.model_name
-            )
-        else:
-            self.policy_net = (
-                self.load_network()
-            )  # policy net - DQN, inputs state vector, outputs q value for each action
+        # if not load:
+        #     self.policy_net = DQN(
+        #         screen_height, screen_width, self.n_actions, history_length=9, model_name=self.model_name
+        #     )
+        # else:
+        #     self.policy_net = (
+        #         self.load_network()
+        #     )  # policy net - DQN, inputs state vector, outputs q value for each action
 
-        self.target_net = DQN(
-            screen_height, screen_width, self.n_actions, history_length=9, model_name=self.model_name
-        )
-        self.target_net.load_state_dict(self.policy_net.state_dict())
-        self.target_net.eval()  # target net - same DQN as policy net, works as frozen net to compute loss
-        # initialize as the same as policy net, use eval to disable Dropout
+        # self.target_net = DQN(
+        #     screen_height, screen_width, self.n_actions, history_length=9, model_name=self.model_name
+        # )
+        # self.target_net.load_state_dict(self.policy_net.state_dict())
+        # self.target_net.eval()  # target net - same DQN as policy net, works as frozen net to compute loss
+        # # initialize as the same as policy net, use eval to disable Dropout
+
+        cfg = get_cfg()
+        # add project-specific config (e.g., TensorMask) here if you're not running a model in detectron2's core library
+        # cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
+        cfg.merge_from_file(model_zoo.get_config_file("PascalVOC-Detection/faster_rcnn_R_50_C4.yaml"))
+
+        cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5  # set threshold for this model
+        # Find a model from detectron2's model zoo. You can use the https://dl.fbaipublicfiles... url as well
+        cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("PascalVOC-Detection/faster_rcnn_R_50_C4.yaml")
+        predictor = DefaultPredictor(cfg)
+        self.predictor = predictor
+
+        self.thing_classes =   MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).thing_classes
+
 
         # training settings
         self.BATCH_SIZE = BATCH_SIZE  # batch size
         self.num_episodes = num_episodes  # number of total episodes
         self.memory = ReplayMemory(10000)  # experience memory object
         self.TARGET_UPDATE = 1  # frequence of update target net
-        self.optimizer = optim.Adam(self.policy_net.parameters(), lr=1e-6)  # optimizer
+        # self.optimizer = optim.Adam(self.policy_net.parameters(), lr=1e-6)  # optimizer
 
-        if use_cuda:
-            self.feature_extractor = self.feature_extractor.cuda()
-            self.target_net = self.target_net.cuda()
-            self.policy_net = self.policy_net.cuda()
+        # if use_cuda:
+        #     self.feature_extractor = self.feature_extractor.cuda()
+        #     self.target_net = self.target_net.cuda()
+        #     self.policy_net = self.policy_net.cuda()
 
         ## newly added
         self.current_coord = [0, 224, 0, 224]
@@ -726,7 +762,7 @@ class Agent:
 
         return bdboxes
 
-    def evaluate(self, dataset):
+    def evaluate(self, dataset, curr_class):
         """
         Conduct evaluation on a given dataset
         For each image in this dataset, using this agent to predict a bounding box on it
@@ -742,7 +778,45 @@ class Agent:
         ind = 0
         for key, value in dataset.items():
             image, gt_boxes = extract(key, dataset)
-            bbox = self.predict_multiple_objects(image)
+            # print("Image : ",image.shape)
+            # print(image.max(), image.min())
+            # exit()
+
+            image = image.permute(1, 2, 0)
+            image = image.numpy()
+            image = np.uint8(image * 255 )
+            # to BGR
+            image = cv.cvtColor(image, cv.COLOR_RGB2BGR)
+
+            outputs = self.predictor(image)
+
+            # print(outputs["instances"].pred_classes )
+            pred_classes = outputs["instances"].pred_classes.cpu().numpy()
+
+            curr_class_ind = self.thing_classes.index(curr_class.lower())
+            # print(pred_classes == curr_class_ind)
+            # exit()
+
+            valid_inds = pred_classes == curr_class_ind
+
+            # thing_classes
+            # print()
+            bbox = outputs["instances"].pred_boxes.tensor.cpu().numpy()
+            # swap 2 and 3 in second axis
+            bbox = bbox[:, [0, 2, 1, 3]]
+            bbox = bbox[valid_inds]
+
+            
+            # print(bbox.shape)
+            # bbox = [bbox[0], bbox[2], bbox[1], bbox[3]]
+            # print(gt_boxes)
+            # print(bbox)
+            # exit()
+            # print(key, value)
+            # exit()
+
+
+            # bbox = self.predict_multiple_objects(image)
             ground_truth_boxes.append(gt_boxes)
             predicted_boxes.append(bbox)
 
@@ -754,9 +828,9 @@ class Agent:
             # exit()
             # if ind == 10:
             #     break
-            
+        
 
-        print("Computing recall and ap...")
+        print("Computing recall and ap...",ind )
         stats = eval_stats_at_threshold(predicted_boxes, ground_truth_boxes)
         print("Final result : \n" + str(stats))
         return stats
