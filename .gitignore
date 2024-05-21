@@ -3,6 +3,6 @@ data/**
 utils/__pycache__/**
 .vscode/**
 models/**
-./baselines/inference/checkpoints
-./baselines/mmdetection
+./baselines/inference/checkpoints/** 
+./baselines/mmdetection/**
 temp/**
