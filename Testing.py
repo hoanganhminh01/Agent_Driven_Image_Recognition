@@ -25,7 +25,8 @@ import pickle
 
 # In[1]:
 
-model_name='resnet50_3step'
+# model_name='resnet50_3step'
+model_name = 'vgg16_3step'
 
 _, val_loader2012 = read_voc_dataset(path="./data/PascalVOC2012", year='2012', download=True)
 
@@ -49,9 +50,10 @@ for i in tq.tqdm(range(len(classes))):
     agent = Agent_3alpha(curr_class, load=True, model_name=model_name)
     res = agent.evaluate(datasets_per_class[curr_class])
     results[curr_class] = res
+    print(results)
 
+    # exit()
 
-# In[ ]:
 
 
 file_name = 'results/classes_results_' + model_name + '.pickle'

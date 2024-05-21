@@ -65,12 +65,13 @@ def show_new_bdbox(image, labels, color='r', count=0):
     xmin, xmax, ymin, ymax = labels[0],labels[1],labels[2],labels[3]
     fig,ax = plt.subplots(1)
     ax.imshow(image.transpose(0, 2).transpose(0, 1))
-
+    import os
     width = xmax-xmin
     height = ymax-ymin
     rect = patches.Rectangle((xmin,ymin),width,height,linewidth=3,edgecolor=color,facecolor='none')
     ax.add_patch(rect)
     ax.set_title("Iteration "+str(count))
+    os.makedirs('./temp', exist_ok=True)
     plt.savefig('./temp/'+str(count)+'.png', dpi=100)
 
 
@@ -147,6 +148,7 @@ def intersection_over_union(box1, box2):
         return iou
 
 def prec_rec_compute(bounding_boxes, gt_boxes, ovthresh):
+
     
     nd = 0
     for each in gt_boxes:
@@ -189,7 +191,7 @@ def prec_rec_compute(bounding_boxes, gt_boxes, ovthresh):
 
 def compute_ap_and_recall(all_bdbox, all_gt, ovthresh):
     prec, rec = prec_rec_compute(all_bdbox, all_gt, ovthresh)
-    ap = voc_ap(rec, prec, False)
+    ap = voc_ap(rec, prec, True)
     return ap, rec[-1]
 
 

@@ -739,11 +739,17 @@ class Agent:
         ground_truth_boxes = []
         predicted_boxes = []
         print("Predicting boxes...")
+        ind = 0
         for key, value in dataset.items():
             image, gt_boxes = extract(key, dataset)
             bbox = self.predict_multiple_objects(image)
             ground_truth_boxes.append(gt_boxes)
             predicted_boxes.append(bbox)
+
+            ind +=1 
+            # if ind == 10:
+            #     break
+            
 
         print("Computing recall and ap...")
         stats = eval_stats_at_threshold(predicted_boxes, ground_truth_boxes)
