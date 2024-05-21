@@ -5,3 +5,4 @@ utils/__pycache__/**
 models/**
 ./baselines/inference/checkpoints
 ./baselines/mmdetection
+temp/**
