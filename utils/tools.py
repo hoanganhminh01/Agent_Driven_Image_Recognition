@@ -6,6 +6,7 @@ from config import *
 import pandas as pd
 import random
 import tqdm.notebook as tq
+from PIL import Image
 
 # Animals
 # classes_animals = ['cat', 'cow', 'dog', 'bird', 'horse', 'sheep', 'person'] 
@@ -16,6 +17,7 @@ classes_objects = ['bottle', 'chair', 'diningtable', 'pottedplant', 'sofa', 'tvm
 # Vehicles
 classes_vehicles = ['aeroplane', 'bicycle', 'boat', 'bus', 'car', 'motorbike', 'train']
 classes = classes_animals
+depth_classes = classes_animals
 
 def sort_class_extract(datasets):
     """
@@ -28,6 +30,7 @@ def sort_class_extract(datasets):
     for dataset in datasets:
         for i in tq.tqdm(dataset):
             img, target = i
+
             obj = target['annotation']['object']
             if isinstance(obj, list):
                 curr_class = target['annotation']['object'][0]["name"]
@@ -39,23 +42,183 @@ def sort_class_extract(datasets):
             for j in classes:
                 org[j] = []
                 org[j].append(img)
-            
+
             if isinstance(obj, list):
                 for j in range(len(obj)):
                     curr_class = obj[j]["name"]
                     if curr_class in classes:
                         org[curr_class].append([obj[j]["bndbox"], target['annotation']['size']])
+                        # if len(org[curr_class]) > 2:
+                        #     print(org[curr_class])
+                        #     print("More than one object in the same image")
+                        #     exit()
             else:
                 if curr_class in classes:
                     org[curr_class].append([obj["bndbox"], target['annotation']['size']])
+
+           
+
             for j in classes:
                 if len(org[j]) > 1:
                     try:
                         datasets_per_class[j][filename].append(org[j])
                     except KeyError:
                         datasets_per_class[j][filename] = []
-                        datasets_per_class[j][filename].append(org[j])       
+                        datasets_per_class[j][filename].append(org[j])   
+
+        
+    # print((datasets_per_class.keys()))
+    # for i in classes:
+    #     print(len(datasets_per_class[i].keys()))
+    # exit()
+
     return datasets_per_class
+
+
+
+
+def sort_class_extract_depth(datasets):
+    """
+    Change a whole dataset to seperate datasets corresponding to classes variable
+    """
+    datasets_per_class = {}
+    datasets_per_class['closest'] = {}
+    ind = 0
+
+    for dataset in datasets:
+        for i in tq.tqdm(dataset):
+            img, target = i
+
+            obj = target['annotation']['object']
+            if isinstance(obj, list):
+                curr_class = target['annotation']['object'][0]["name"]
+            else:
+                curr_class = target['annotation']['object']["name"]
+            filename = target['annotation']['filename']
+
+            # HACK reading the depth
+            depth_dir = './data/PascalVOC2012/VOCdevkit/VOC2012/depth_maps'
+            depth_path = f'{depth_dir}/{filename[:-4]}.png'
+            depth_img = Image.open(depth_path).convert('L').resize((224, 224), Image.NEAREST)
+            depth_img = np.array(depth_img)
+
+            # print(depth_img.shape)
+            # print(img.shape)
+            # exit()
+            
+
+            org = {}
+            for j in depth_classes:
+                org[j] = []
+                org[j].append(img)
+
+            if isinstance(obj, list):
+                # get depth of each bbox 
+                depths = []
+                ratio = 0.8
+                for j in range(len(obj)):
+                    bbox = obj[j]["bndbox"]
+                    xmin = int(bbox['xmin'])
+                    xmax = int(bbox['xmax'])
+                    ymin = int(bbox['ymin'])
+                    ymax = int(bbox['ymax'])
+
+                    ori_width = target['annotation']['size']['width']
+                    ori_height = target['annotation']['size']['height']
+
+                    ori_width = float(ori_width)
+                    ori_height = float(ori_height)
+
+                    xmin = xmin /  ori_width * 224
+                    xmax = xmax /  ori_width * 224
+
+                    ymin = ymin /  ori_height * 224
+                    ymax = ymax /  ori_height * 224
+
+                    # shrink the size of  bbox according to the ratio
+                    width = xmax - xmin
+                    height = ymax - ymin
+
+                    xmin = int(xmin + width * (1-ratio)/2)
+                    xmax = int(xmax - width * (1-ratio)/2)
+
+                    ymin = int(ymin + height * (1-ratio)/2)
+                    ymax = int(ymax - height * (1-ratio)/2)
+
+        
+
+                    depth = depth_img[ymin:ymax, xmin:xmax].mean()
+                    depths.append(depth)
+
+                # print(depths)
+
+
+                # only take classes with more than 2 objects
+                if len(obj) > 1:
+
+                    # get max depth ind and save it to org
+                    max_depth_ind = np.argmax(depths)
+                    curr_class = obj[max_depth_ind]["name"]
+
+                    if curr_class in depth_classes:
+                        
+                        org[curr_class].append([obj[max_depth_ind]["bndbox"], target['annotation']['size'], depths[max_depth_ind]])
+
+                        # visualization
+                        visualization = False
+                        if visualization:
+                                
+                            ind += 1
+                            bbox = obj[max_depth_ind]["bndbox"]
+                            xmin = int(bbox['xmin'])
+                            xmax = int(bbox['xmax'])
+                            ymin = int(bbox['ymin'])
+                            ymax = int(bbox['ymax'])
+
+
+                            ori_width = float(ori_width)
+                            ori_height = float(ori_height)
+
+                            xmin = xmin /  ori_width * 224
+                            xmax = xmax /  ori_width * 224
+
+                            ymin = ymin /  ori_height * 224
+                            ymax = ymax /  ori_height * 224
+
+                            show_new_bdbox(img,[xmin, xmax, ymin, ymax], count=ind)
+
+
+                
+
+                
+                # for j in range(len(obj)):
+                #     curr_class = obj[j]["name"]
+                #     if curr_class in classes:
+                #         org[curr_class].append([obj[j]["bndbox"], target['annotation']['size']])
+                        
+            else:
+                if curr_class in depth_classes:
+                    org[curr_class].append([obj["bndbox"], target['annotation']['size']])
+            
+           
+            # save everything into the class 'closest' to the camera
+            for j in depth_classes:
+                if len(org[j]) > 1:
+                    try:
+                        datasets_per_class['closest'][filename].append(org[j])
+                        
+                    except KeyError:
+                        datasets_per_class['closest'][filename] = []
+                        datasets_per_class['closest'][filename].append(org[j])   
+
+
+    
+    print((datasets_per_class.keys()))
+    print(len(datasets_per_class['closest'].keys()))
+    # exit()
+
+    return datasets_per_class
+
 
 
 def show_new_bdbox(image, labels, color='r', count=0):
@@ -72,7 +235,7 @@ def show_new_bdbox(image, labels, color='r', count=0):
     ax.add_patch(rect)
     ax.set_title("Iteration "+str(count))
     os.makedirs('./temp', exist_ok=True)
-    plt.savefig('./temp/'+str(count)+'.png', dpi=100)
+    plt.savefig('./temp/'+str(count)+'.jpg', dpi=100)
 
 
 def extract(index, loader):
@@ -114,6 +277,8 @@ def voc_ap(rec, prec, voc2012=True):
             else:
                 p = np.max(prec[rec >= t])
             ap = ap + p / 11.0
+            print(p)
+
     else:
         mrec = np.concatenate(([0.0], rec, [1.0]))
         mpre = np.concatenate(([0.0], prec, [0.0]))

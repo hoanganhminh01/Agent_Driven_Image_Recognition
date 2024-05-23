@@ -7,6 +7,7 @@ FloatTensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
 LongTensor = torch.cuda.LongTensor if use_cuda else torch.LongTensor
 Tensor = FloatTensor
 SAVE_MODEL_PATH = './models/q_network'
+SAVE_MODEL_PATH_DEPTH = './models/q_network_depth'
 if use_cuda:
     criterion = nn.MSELoss().cuda()   
 else:

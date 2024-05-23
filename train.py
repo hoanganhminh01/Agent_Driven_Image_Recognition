@@ -7,7 +7,9 @@ import pickle
 import fire
 # vgg19_3step
 
-def main(model_name, BATCH_SIZE=128):
+
+
+def main(model_name, BATCH_SIZE=128, use_depth=False):
 
     # hack 
     if '_3step' not in model_name:
@@ -17,8 +19,19 @@ def main(model_name, BATCH_SIZE=128):
         path="./data/PascalVOC2012", year="2012", download=False
     )
 
-    datasets_per_class_train = sort_class_extract([train_loader2012])
-    datasets_per_class_test = sort_class_extract([val_loader2012])
+    print("Training...", "Model: ", model_name, "BATCH_SIZE: ", BATCH_SIZE)
+
+    if use_depth:
+        print("Using Depth")
+    
+
+    if not use_depth:
+        datasets_per_class_train = sort_class_extract([train_loader2012])
+        datasets_per_class_test = sort_class_extract([val_loader2012])
+    else:
+        datasets_per_class_train = sort_class_extract_depth([train_loader2012])
+        datasets_per_class_test = sort_class_extract_depth([val_loader2012])
+        classes = ["closest"]
 
     for i in tq.tqdm(range(len(classes))):
         curr_class = classes[i]
@@ -54,7 +67,7 @@ def main(model_name, BATCH_SIZE=128):
 
     curr_class = random.choice(classes)
     indices = np.random.choice(
-        list(datasets_per_class_test[classe].keys()), size=5, replace=False
+        list(datasets_per_class_test[curr_class].keys()), size=5, replace=False
     )
     agent = Agent_3alpha(curr_class, load=True, model_name=model_name)
 

@@ -40,6 +40,7 @@ class Agent:
         model_name="vgg16",
         n_actions=9,
         BATCH_SIZE=128,
+        use_depth = False
     ):
         # basic settings
         self.n_actions = n_actions  # total number of actions
@@ -58,7 +59,12 @@ class Agent:
 
         # networks
         self.curr_class = curr_class  # which class this agent is working on
-        self.save_path = SAVE_MODEL_PATH  # path to save network
+
+        if use_depth:
+            self.save_path = SAVE_MODEL_PATH_DEPTH
+        else:
+            self.save_path = SAVE_MODEL_PATH  # path to save network
+        print(self.save_path)
         self.model_name = model_name  # which model to use for feature extractor 'vgg16' or 'resnet50' or ...
         self.feature_extractor = FeatureExtractor(network=self.model_name)
         self.feature_extractor.eval()  # a pre-trained CNN model as feature extractor
@@ -726,7 +732,7 @@ class Agent:
 
         return bdboxes
 
-    def evaluate(self, dataset):
+    def evaluate(self, dataset, use_depth =False):
         """
         Conduct evaluation on a given dataset
         For each image in this dataset, using this agent to predict a bounding box on it
@@ -743,6 +749,12 @@ class Agent:
         for key, value in dataset.items():
             image, gt_boxes = extract(key, dataset)
             bbox = self.predict_multiple_objects(image)
+
+            # print(bbox)
+            # if use_depth:
+            #     # bbox = [bbox[0]]
+            #     print(bbox)
+            
             ground_truth_boxes.append(gt_boxes)
             predicted_boxes.append(bbox)
 
@@ -751,7 +763,7 @@ class Agent:
             # print(image.shape)
             # print(bbox,gt_boxes)
 
-            # exit()
+            # # exit()
             # if ind == 10:
             #     break
             
