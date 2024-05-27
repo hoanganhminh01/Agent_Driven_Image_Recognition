@@ -9,8 +9,9 @@ import tqdm.notebook as tq
 from PIL import Image
 
 # Animals
-# classes_animals = ['cat', 'cow', 'dog', 'bird', 'horse', 'sheep', 'person'] 
-classes_animals = ['cat', 'cow', 'dog', 'bird', 'horse', 'sheep'] 
+classes_animals = ['cat', 'cow', 'dog', 'bird', 'horse', 'sheep', 'person'] 
+# classes_animals = ['cat', 'cow', 'dog', 'bird', 'horse', 'sheep'] 
+# classes_animals = ['person'] 
 
 # Objects
 classes_objects = ['bottle', 'chair', 'diningtable', 'pottedplant', 'sofa', 'tvmonitor']
@@ -105,7 +106,7 @@ def sort_class_extract_depth(datasets):
             # print(depth_img.shape)
             # print(img.shape)
             # exit()
-            
+            # print(depth_classes)
 
             org = {}
             for j in depth_classes:

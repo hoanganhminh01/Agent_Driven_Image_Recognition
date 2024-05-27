@@ -72,14 +72,14 @@ with open(file_name, 'wb') as handle:
 # ## Visualize Random Class
 
 
-# curr_class = random.choice(classes)
-# indices = np.random.choice(list(datasets_per_class[curr_class].keys()), size=5, replace=False)
-# agent = Agent_3alpha(curr_class, load=True, model_name=model_name)
+curr_class = random.choice(classes)
+indices = np.random.choice(list(datasets_per_class[curr_class].keys()), size=5, replace=False)
+agent = Agent_3alpha(curr_class, load=True, model_name=model_name)
 
-# print("Class: " + curr_class)
-# for index in indices:
-#     image, gt_boxes = extract(index, datasets_per_class[curr_class])
-#     agent.predict_image(image, plot=True)
+print("Class: " + curr_class)
+for index in indices:
+    image, gt_boxes = extract(index, datasets_per_class[curr_class])
+    agent.predict_image(image, plot=True)
 
 
 

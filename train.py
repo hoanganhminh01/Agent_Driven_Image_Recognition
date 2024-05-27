@@ -28,6 +28,8 @@ def main(model_name, BATCH_SIZE=128, use_depth=False):
     if not use_depth:
         datasets_per_class_train = sort_class_extract([train_loader2012])
         datasets_per_class_test = sort_class_extract([val_loader2012])
+        # classes = ['person'] 
+
     else:
         datasets_per_class_train = sort_class_extract_depth([train_loader2012])
         datasets_per_class_test = sort_class_extract_depth([val_loader2012])
